@@ -30,16 +30,17 @@
 
         <!-- Example 1 -->
         <section class="wave-doctor-example" 
-                 data-raw-audio="audio/vocals-raw.mp3" 
-                 data-processed-audio="audio/vocals-processed.mp3"
-                 data-color="blue">
-            <h2>Warm Vocals Enhancement</h2>
+                 data-audio-basename="drums_1"
+                 data-color="purple">
+            <h2>Drum Processing</h2>
             <p>
-                Subtle harmonic enhancement that brings vocal presence without harshness. 
-                Notice how Wave Doctor adds clarity to the singer\'s voice while preserving the natural timbre.
+                Adding analog-style saturation to digital drums, enhancing punch and presence. 
+                Wave Doctor creates the impression of drums recorded through premium analog gear.
             </p>
-            <div class="formula">
-                <code>pre=tanh(x * 1.8), post=x, blend=smooth_sine, blend_width=0.03, knee=0.6,0.8</code>
+            <div class="example-toggles drum-example-toggles">
+                <button class="drum-example-btn active" data-example-index="1">Example 1</button>
+                <button class="drum-example-btn" data-example-index="2">Example 2</button>
+                <button class="drum-example-btn" data-example-index="3">Example 3</button>
             </div>
             <div class="waveform-container">
                 <canvas class="waveform-canvas"></canvas>
@@ -55,7 +56,7 @@
                 <div class="toggle-container">
                     <span>Raw</span>
                     <label class="switch">
-                        <input type="checkbox" checked class="wave-doctor-toggle" disabled>
+                        <input type="checkbox" class="wave-doctor-toggle" disabled>
                         <span class="slider"></span>
                     </label>
                     <span>Processed</span>
@@ -66,80 +67,7 @@
 
         <!-- Example 2 -->
         <section class="wave-doctor-example" 
-                 data-raw-audio="audio/drums-raw.mp3" 
-                 data-processed-audio="audio/drums-processed.mp3"
-                 data-color="purple">
-            <h2>Drum Processing</h2>
-            <p>
-                Adding analog-style saturation to digital drums, enhancing punch and presence. 
-                Wave Doctor creates the impression of drums recorded through premium analog gear.
-            </p>
-            <div class="formula">
-                <code>pre=tanh(x * 2.2), post=x^0.9, blend=quadratic, blend_width=0.05, knee=0.45,0.75</code>
-            </div>
-            <div class="waveform-container">
-                <canvas class="waveform-canvas"></canvas>
-                <div class="waveform-overlay">
-                    <div class="loading-indicator">
-                        <div class="loading-spinner"></div>
-                        <span>Loading audio...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="controls">
-                <button class="play-button" disabled>Play</button>
-                <div class="toggle-container">
-                    <span>Raw</span>
-                    <label class="switch">
-                        <input type="checkbox" checked class="wave-doctor-toggle" disabled>
-                        <span class="slider"></span>
-                    </label>
-                    <span>Processed</span>
-                </div>
-                <div class="time-display">0:00 / 0:00</div>
-            </div>
-        </section>
-
-        <!-- Example 3 -->
-        <section class="wave-doctor-example" 
-                 data-raw-audio="audio/bass-raw.mp3" 
-                 data-processed-audio="audio/bass-processed.mp3"
-                 data-color="teal">
-            <h2>Electronic Bass Enhancement</h2>
-            <p>
-                Thickening bass with controlled harmonics. Wave Doctor adds weight and texture
-                to a thin digital bass sound without muddying the low end.
-            </p>
-            <div class="formula">
-                <code>pre=tanh(x * 2.8), post=x, blend=cubic, blend_width=0.04, knee=0.4,0.65</code>
-            </div>
-            <div class="waveform-container">
-                <canvas class="waveform-canvas"></canvas>
-                <div class="waveform-overlay">
-                    <div class="loading-indicator">
-                        <div class="loading-spinner"></div>
-                        <span>Loading audio...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="controls">
-                <button class="play-button" disabled>Play</button>
-                <div class="toggle-container">
-                    <span>Raw</span>
-                    <label class="switch">
-                        <input type="checkbox" checked class="wave-doctor-toggle" disabled>
-                        <span class="slider"></span>
-                    </label>
-                    <span>Processed</span>
-                </div>
-                <div class="time-display">0:00 / 0:00</div>
-            </div>
-        </section>
-
-        <!-- Example 4 -->
-        <section class="wave-doctor-example" 
-                 data-raw-audio="audio/mix-raw.mp3" 
-                 data-processed-audio="audio/mix-processed.mp3"
+                 data-audio-basename="mix"
                  data-color="amber">
             <h2>Full Mix Mastering</h2>
             <p>
@@ -163,7 +91,77 @@
                 <div class="toggle-container">
                     <span>Raw</span>
                     <label class="switch">
-                        <input type="checkbox" checked class="wave-doctor-toggle" disabled>
+                        <input type="checkbox" class="wave-doctor-toggle" disabled>
+                        <span class="slider"></span>
+                    </label>
+                    <span>Processed</span>
+                </div>
+                <div class="time-display">0:00 / 0:00</div>
+            </div>
+        </section>
+
+        <!-- Example 3 -->
+        <section class="wave-doctor-example" 
+                 data-audio-basename="vocals"
+                 data-color="blue">
+            <h2>Warm Vocals Enhancement</h2>
+            <p>
+                Subtle harmonic enhancement that brings vocal presence without harshness. 
+                Notice how Wave Doctor adds clarity to the singer's voice while preserving the natural timbre.
+            </p>
+            <div class="formula">
+                <code>pre=tanh(x * 1.8), post=x, blend=smooth_sine, blend_width=0.03, knee=0.6,0.8</code>
+            </div>
+            <div class="waveform-container">
+                <canvas class="waveform-canvas"></canvas>
+                <div class="waveform-overlay">
+                    <div class="loading-indicator">
+                        <div class="loading-spinner"></div>
+                        <span>Loading audio...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="play-button" disabled>Play</button>
+                <div class="toggle-container">
+                    <span>Raw</span>
+                    <label class="switch">
+                        <input type="checkbox" class="wave-doctor-toggle" disabled>
+                        <span class="slider"></span>
+                    </label>
+                    <span>Processed</span>
+                </div>
+                <div class="time-display">0:00 / 0:00</div>
+            </div>
+        </section>
+
+        <!-- Example 4 -->
+        <section class="wave-doctor-example" 
+                 data-audio-basename="bass"
+                 data-color="teal">
+            <h2>Electronic Bass Enhancement</h2>
+            <p>
+                Thickening bass with controlled harmonics. Wave Doctor adds weight and texture
+                to a thin digital bass sound without muddying the low end.
+            </p>
+            <div class="formula">
+                <code>pre=tanh(x * 2.8), post=x, blend=cubic, blend_width=0.04, knee=0.4,0.65</code>
+            </div>
+            <div class="waveform-container">
+                <canvas class="waveform-canvas"></canvas>
+                <div class="waveform-overlay">
+                    <div class="loading-indicator">
+                        <div class="loading-spinner"></div>
+                        <span>Loading audio...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="play-button" disabled>Play</button>
+                <div class="toggle-container">
+                    <span>Raw</span>
+                    <label class="switch">
+                        <input type="checkbox" class="wave-doctor-toggle" disabled>
                         <span class="slider"></span>
                     </label>
                     <span>Processed</span>

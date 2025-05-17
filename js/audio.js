@@ -27,7 +27,7 @@ class WaveDoctorAudioManager {
         
         // Playback state
         this.isPlaying = false;
-        this.isWaveDoctorEnabled = true;
+        this.isWaveDoctorEnabled = false;
         this.startTime = 0;
         this.pauseTime = 0;
         
@@ -155,51 +155,48 @@ class WaveDoctorAudioManager {
     
     /**
      * Start playback of both raw and processed audio
+     * @param {boolean} waveDoctorEnabled - Whether Wave Doctor processing is active
+     * @param {number} [startOffset=-1] - Specific time in seconds to start from. -1 means use pause/resume logic.
      */
-    startPlayback(waveDoctorEnabled = true) {
+    startPlayback(waveDoctorEnabled = true, startOffset = -1) {
         if (!this.audioContext || !this.rawBuffer || !this.processedBuffer) {
             console.error('Cannot start playback: audio not loaded');
             return false;
         }
-        
-        // Stop any current playback
+
         this.stopPlayback(false);
-        
-        // Set Wave Doctor state
+
         this.isWaveDoctorEnabled = waveDoctorEnabled;
-        
-        // Calculate start offset for resuming from pause
+
         let offset = 0;
-        if (this.pauseTime > 0 && this.startTime > 0) {
+        if (startOffset >= 0) { 
+            offset = startOffset;
+        } else if (this.pauseTime > 0 && this.startTime > 0) { 
             offset = this.pauseTime - this.startTime;
-            // Ensure offset is within buffer duration
-            offset = Math.min(offset, this.rawBuffer.duration);
         }
-        
-        // Create and configure source nodes
+        offset = Math.max(0, offset % this.rawBuffer.duration);
+
+
         this.rawSource = this.audioContext.createBufferSource();
         this.rawSource.buffer = this.rawBuffer;
         this.rawSource.connect(this.rawGain);
-        
+        this.rawSource.loop = true;
+
         this.processedSource = this.audioContext.createBufferSource();
         this.processedSource.buffer = this.processedBuffer;
         this.processedSource.connect(this.processedGain);
-        
-        // Set crossfade based on Wave Doctor state
+        this.processedSource.loop = true;
+
         this.updateCrossfade(this.isWaveDoctorEnabled);
-        
-        // Start playback from offset
+
         const now = this.audioContext.currentTime;
         this.rawSource.start(now, offset);
         this.processedSource.start(now, offset);
-        
-        // Update timing info for pause/resume
+
         this.startTime = now - offset;
         this.pauseTime = 0;
-        
-        // Update playback state
+
         this.isPlaying = true;
-        
         return true;
     }
     
@@ -207,39 +204,33 @@ class WaveDoctorAudioManager {
      * Stop playback and optionally reset playback position
      */
     stopPlayback(resetPosition = true) {
-        if (!this.isPlaying) return;
-        
-        // Store pause time for resuming later
-        if (!resetPosition) {
+        if (!this.isPlaying && !this.rawSource && !this.processedSource) return;
+
+        if (this.isPlaying) {
             this.pauseTime = this.audioContext.currentTime;
         }
         
-        // Stop and disconnect sources
         if (this.rawSource) {
             try {
                 this.rawSource.stop();
                 this.rawSource.disconnect();
-            } catch (e) { /* Ignore errors if already stopped */ }
+            } catch (e) { /* Ignore */ }
+            this.rawSource = null;
         }
-        
+
         if (this.processedSource) {
             try {
                 this.processedSource.stop();
                 this.processedSource.disconnect();
-            } catch (e) { /* Ignore errors if already stopped */ }
+            } catch (e) { /* Ignore */ }
+            this.processedSource = null;
         }
-        
-        // Clear source references
-        this.rawSource = null;
-        this.processedSource = null;
-        
-        // Reset playback position if requested
+
         if (resetPosition) {
             this.startTime = 0;
             this.pauseTime = 0;
         }
         
-        // Update playback state
         this.isPlaying = false;
     }
     
@@ -280,53 +271,34 @@ class WaveDoctorAudioManager {
     }
     
     /**
-     * Seek to a specific position in the audio (0-1)
+     * Seek to a specific position in the audio (0-1 range for full duration)
      */
-    seekTo(position) {
-        if (!this.rawBuffer) return false;
-        
-        const newTime = Math.max(0, Math.min(position, 1)) * this.rawBuffer.duration;
-        
-        if (this.isPlaying) {
-            // If playing, restart with new offset
-            const wasPlaying = this.isPlaying;
-            this.stopPlayback(true);
-            
-            // Store new start time for correct resume
-            this.startTime = this.audioContext.currentTime - newTime;
-            
-            if (wasPlaying) {
-                this.startPlayback(this.isWaveDoctorEnabled);
-            }
-        } else {
-            // If paused, just update startTime
-            this.startTime = this.audioContext.currentTime - newTime;
-            this.pauseTime = this.audioContext.currentTime;
+    seekTo(positionFraction) {
+        if (!this.audioContext || !this.rawBuffer) {
+            console.warn('Cannot seek: audio not loaded.');
+            return false;
         }
+
+        const seekTime = Math.max(0, Math.min(positionFraction, 1)) * this.rawBuffer.duration;
+
+        this.startPlayback(this.isWaveDoctorEnabled, seekTime);
         
         return true;
     }
     
     /**
-     * Get the current playback time
+     * Get the current playback time, wrapped for looping
      */
     getCurrentTime() {
-        if (!this.rawBuffer) return 0;
-        
+        if (!this.rawBuffer || !this.audioContext) return 0;
+
         if (this.isPlaying) {
-            // If playing, calculate from startTime
-            return Math.min(
-                this.audioContext.currentTime - this.startTime,
-                this.rawBuffer.duration
-            );
+            let currentTime = this.audioContext.currentTime - this.startTime;
+            return currentTime % this.rawBuffer.duration;
         } else if (this.pauseTime > 0 && this.startTime > 0) {
-            // If paused, use stored pause position
-            return Math.min(
-                this.pauseTime - this.startTime,
-                this.rawBuffer.duration
-            );
+            let pausedTime = this.pauseTime - this.startTime;
+            return pausedTime % this.rawBuffer.duration;
         }
-        
         return 0;
     }
     

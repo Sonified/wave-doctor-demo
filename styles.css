@@ -149,6 +149,36 @@ p {
     font-size: 14px;
 }
 
+/* Example Toggles (New) */
+.example-toggles {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.drum-example-btn {
+    padding: 8px 16px;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: var(--gray-light);
+    color: var(--gray-dark);
+    border: 1px solid var(--gray-mid);
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    font-size: 14px; /* Explicitly setting for consistency */
+}
+
+.drum-example-btn:hover:not(.active) {
+    background-color: #e2e8f0; /* Slightly darker gray on hover */
+}
+
+/* Active state for drum example buttons within the purple-themed section */
+.wave-doctor-example[data-color="purple"] .drum-example-btn.active {
+    background-color: var(--purple-dark);
+    color: white;
+    border-color: var(--purple-dark);
+}
+
 /* Waveform Display */
 .waveform-container {
     position: relative;

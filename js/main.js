@@ -23,9 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeDisplay = section.querySelector('.time-display');
         const loadingOverlay = section.querySelector('.waveform-overlay');
         
-        // Get audio file paths from data attributes
-        const rawAudioPath = section.dataset.rawAudio;
-        const processedAudioPath = section.dataset.processedAudio;
+        // Get audio file basename from data attribute
+        const audioBasename = section.dataset.audioBasename;
         
         // Get section theme color
         const sectionColor = section.dataset.color || 'blue';
@@ -47,29 +46,92 @@ document.addEventListener('DOMContentLoaded', () => {
             colorTheme: getColorTheme(sectionColor),
         };
 
-        // Load audio files
-        audioManager.loadAudioPair(rawAudioPath, processedAudioPath)
-            .then(() => {
-                // Audio loaded successfully
-                player.isLoaded = true;
-                playButton.disabled = false;
-                waveDoctorToggle.disabled = false;
-                
-                // Hide loading overlay
-                loadingOverlay.classList.add('hidden');
-                
-                // Draw initial waveform visualization
-                drawStaticWaveform(waveformCanvas, player.colorTheme.light, player.colorTheme.mid);
-                
-                // Display audio duration
-                const duration = audioManager.getDuration();
-                timeDisplay.textContent = `0:00 / ${formatTime(duration)}`;
-            })
-            .catch(error => {
-                console.error('Error loading audio:', error);
-                loadingOverlay.querySelector('.loading-indicator').innerHTML = 
-                    '<div style="color: red;">Error loading audio</div>';
+        // Function to load and initialize audio for a player
+        function loadAndSetupAudio(currentAudioBasename, startPlaying = false) {
+            player.isLoaded = false;
+            playButton.disabled = true;
+            waveDoctorToggle.disabled = true;
+            loadingOverlay.classList.remove('hidden');
+            if (loadingOverlay.querySelector('.loading-indicator div[style*="color: red"]')) {
+                loadingOverlay.querySelector('.loading-indicator').innerHTML = '<div class="loading-spinner"></div><span>Loading audio...</span>';
+            }
+            // If any audio is playing, stop it and reset its UI
+            if (currentlyPlayingSection) {
+                if (currentlyPlayingSection.isPlaying) {
+                    audioManager.stopPlayback(true); // Stop and reset position
+                    currentlyPlayingSection.isPlaying = false;
+                    currentlyPlayingSection.playButton.textContent = 'Play';
+                    if (currentlyPlayingSection.animationId) {
+                        cancelAnimationFrame(currentlyPlayingSection.animationId);
+                        currentlyPlayingSection.animationId = null;
+                    }
+                    drawStaticWaveform(currentlyPlayingSection.waveformCanvas, currentlyPlayingSection.colorTheme.light, currentlyPlayingSection.colorTheme.mid);
+                }
+                if (currentlyPlayingSection !== player) { // Only reset if it wasn't this player
+                    currentlyPlayingSection.timeDisplay.textContent = `0:00 / ${formatTime(audioManager.getDuration() || 0)}`;
+                }
+            }
+            currentlyPlayingSection = null; // Reset global playing section tracker
+
+            const newRawPath = `audio/${currentAudioBasename}.mp3`;
+            const newProcessedPath = `audio/${currentAudioBasename}-wd.mp3`;
+
+            audioManager.loadAudioPair(newRawPath, newProcessedPath)
+                .then(() => {
+                    player.isLoaded = true;
+                    playButton.disabled = false;
+                    waveDoctorToggle.disabled = false;
+                    loadingOverlay.classList.add('hidden');
+                    const duration = audioManager.getDuration();
+                    timeDisplay.textContent = `0:00 / ${formatTime(duration)}`;
+                    drawStaticWaveform(waveformCanvas, player.colorTheme.light, player.colorTheme.mid);
+
+                    if (startPlaying) {
+                        // Ensure audio context is running if previously suspended
+                        if (audioManager.audioContext && audioManager.audioContext.state === 'suspended') {
+                            audioManager.audioContext.resume();
+                        }
+                        audioManager.startPlayback(waveDoctorToggle.checked, 0); // Start from beginning
+                        player.isPlaying = true;
+                        playButton.textContent = 'Pause';
+                        startWaveformAnimation(player, audioManager);
+                        currentlyPlayingSection = player;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading audio:', error);
+                    loadingOverlay.querySelector('.loading-indicator').innerHTML =
+                        '<div style="color: red;">Error loading audio</div>';
+                    timeDisplay.textContent = '0:00 / 0:00';
+                    drawStaticWaveform(waveformCanvas, player.colorTheme.light, player.colorTheme.mid); // Show static on error
+                });
+        }
+
+        // Initial load for the section
+        loadAndSetupAudio(audioBasename);
+
+        // Specific logic for drum examples if they exist in this section
+        const drumExampleToggles = section.querySelector('.drum-example-toggles');
+        if (drumExampleToggles) {
+            const drumButtons = drumExampleToggles.querySelectorAll('.drum-example-btn');
+            drumButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (button.classList.contains('active')) return; // Do nothing if already active
+
+                    drumButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    const exampleIndex = button.dataset.exampleIndex;
+                    const newDrumBasename = `drums_${exampleIndex}`;
+                    
+                    // Set this new basename on the section's dataset for consistency if needed elsewhere
+                    section.dataset.audioBasename = newDrumBasename;
+
+                    // Load the new drum audio and start playing it
+                    loadAndSetupAudio(newDrumBasename, true);
+                });
             });
+        }
 
         // Set up play/pause button
         playButton.addEventListener('click', () => {
